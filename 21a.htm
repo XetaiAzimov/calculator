@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Document</title>
+        <style>
+            #game { position: relative; margin: 10vh auto; border: 1px solid #333; box-shadow: 0 0 10px #333 }
+            #game > * { position: absolute; }
+        </style>
+    </head>
+    <body>
+        <script>
+            class HTMLelem {
+                constructor(id, w, h, r, c, x, y, dx, dy) {
+                    this.id = id
+                    this.w = w
+                    this.h = h
+                    this.r = r
+                    this.c = c
+                    this.x = x
+                    this.y = y
+                    this.dx = dx
+                    this.dy = dy
+                }
+                create(tag) {
+                    tag.innerHTML += `<div id="${this.id}"></div>`
+                    this.show()
+                }
+                show() {
+                    this.elem = document.getElementById(this.id)
+                    this.elem.style.width = this.w + 'px'
+                    this.elem.style.height = this.h + 'px'
+                    this.elem.style.borderRadius = this.r + '%'
+                    this.elem.style.backgroundColor = this.c
+                    this.elem.style.left = this.x + 'px'
+                    this.elem.style.top = this.y + 'px'
+                }
+            }
+
+            class Bricks {
+                constructor(row, col, gap) {
+                    this.arr = []
+                    this.row = row
+                    this.col = col
+                    this.gap = gap
+                }
+                create(c) {
+                    let w = (game.w - (this.col + 1) * this.gap) / this.col
+                    let h = w / 5
+                    for (let i = 0; i < this.row; i++) {
+                        for (let j = 0; j < this.col; j++) {
+                            let id = 'b' + i + j
+                            let x = j * w + (j + 1) * this.gap
+                            let y = i * h + (i + 1) * this.gap
+
+                            let brick = new HTMLelem(id, w, h, 0, c, x, y)
+                            this.arr.push(brick)
+                            brick.create(game.elem)
+                        }   
+                    }
+                }
+                check() {
+                    for (const i in this.arr) {
+                        let brick = this.arr[i]
+                        if ( collision(brick) ) {
+                            ball.dy *= -1
+                            document.getElementById(brick.id).remove()
+                            this.arr.splice(i, 1)
+                        }
+                    }
+                }
+            }
+
+            const game = new HTMLelem('game', 800, 600, 0, 'white')
+            const ball = new HTMLelem('ball', 30, 30, 50, 'red', 0, 0, 5, 5)
+            const bar = new HTMLelem('bar', 150, 10, 5, 'blue', 0, 0, 10, 10)
+
+            const bricks = new Bricks(4, 6, 10)
+
+            game.over = function() {
+                clearInterval(timer)
+                this.c = 'black'
+                this.show()
+                this.elem.innerHTML = 'GAME OVER !!!'
+                this.elem.style.color = 'yellow'
+                this.elem.style.font = '5em Arial'
+            }
+            ball.y = game.h - bar.h - ball.h
+            ball.move = function() {
+                if (this.x < 0 || this.x >= game.w - this.w) this.dx *= -1
+                if (this.y < 0) this.dy *= -1
+                if (this.y >= game.h - this.h) game.over()
+                if ( collision(bar) ) this.dy *= -1
+                this.x += this.dx
+                this.y += this.dy
+                bricks.check()
+                this.show()
+            }
+
+            bar.y = game.h - bar.h
+            bar.move = function(e) {
+                if (e.keyCode == 39 && this.x < game.w - this.w) this.x += this.dx
+                if (e.keyCode == 37 && this.x > 0) this.x -= this.dx
+                this.show()
+            }
+
+            let timer = setInterval(() => ball.move(), 40)
+            document.onkeydown = (e) => bar.move(e)
+            
+            game.create(document.body)
+            ball.create(game.elem)
+            bar.create(game.elem)
+            bricks.create('orange')
+
+            function collision(obj) {
+                return (ball.x > obj.x - ball.w  && 
+                    ball.x < obj.x + obj.w  &&
+                    ball.y > obj.y - ball.h  &&  
+                    ball.y < obj.y + obj.h)
+            }
+        </script>
+    </body>
+</html>
